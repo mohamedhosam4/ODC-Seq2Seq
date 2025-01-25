@@ -1,4 +1,3 @@
-
 ### Streamlit Code
 import streamlit as st
 import torch
@@ -23,25 +22,35 @@ def load_model():
     model.eval()
     return model, device
 
+def preprocess_input(input_text):
+    try:
+        # Convert input text into integers, splitting by spaces
+        return [int(x) for x in input_text.split()]
+    except ValueError:
+        return None
+
 def main():
     st.title("Seq2Seq Text Transformation")
     model, device = load_model()
 
-    input_text = st.text_area("Enter input text:", "")
+    input_text = st.text_area("Enter input text (space-separated integers):", "")
     if st.button("Generate Output"):
         if input_text:
-            # Convert input_text to tensor
-            src = torch.tensor([[int(x) for x in input_text.split()]], dtype=torch.long).to(device)
-            trg = torch.zeros((10, 1), dtype=torch.long).to(device)  # Placeholder target tensor
+            src_data = preprocess_input(input_text)
+            if src_data is not None:
+                src = torch.tensor([src_data], dtype=torch.long).to(device)
+                trg = torch.zeros((10, 1), dtype=torch.long).to(device)  # Placeholder target tensor
 
-            with torch.no_grad():
-                output = model(src, trg, 0)  # No teacher forcing
+                with torch.no_grad():
+                    output = model(src, trg, 0)  # No teacher forcing
 
-            # Convert output tensor to text
-            output_tokens = output.argmax(2).squeeze(1).tolist()
-            output_text = " ".join(map(str, output_tokens))
+                # Convert output tensor to text
+                output_tokens = output.argmax(2).squeeze(1).tolist()
+                output_text = " ".join(map(str, output_tokens))
 
-            st.success(f"Generated Output: {output_text}")
+                st.success(f"Generated Output: {output_text}")
+            else:
+                st.error("Input must be space-separated integers.")
         else:
             st.error("Please enter input text.")
 
