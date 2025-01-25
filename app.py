@@ -5,34 +5,26 @@ import numpy as np
 import gdown
 import pickle
 
-# Function to download the model from Google Drive using gdown
-@st.cache_resource
-def load_model_from_drive():
-    # Google Drive model link (replace with actual file ID)
-    gdrive_link = "https://drive.google.com/uc?id=10jle6RnLUtLQEuFO2yoBefAogRJDYMjl"
-
-    # Download the model
-    model_path = "seq2seq_model.h5"
-    gdown.download(gdrive_link, model_path, quiet=False)
-    
-    # Load and return the model
-    return tf.keras.models.load_model(model_path)
-
-# Function to load tokenizer from Google Drive using gdown
-@st.cache_resource
-def load_tokenizer_from_drive(tokenizer_path):
-    # Download the tokenizer
-    gdown.download(tokenizer_path, tokenizer_path, quiet=False)
-    with open(tokenizer_path, 'rb') as f:
-        tokenizer = pickle.load(f)
-    return tokenizer
+# Download the model from Google Drive using gdown
+gdrive_link = "https://drive.google.com/uc?id=10jle6RnLUtLQEuFO2yoBefAogRJDYMjl"
+model_path = "seq2seq_model.h5"
+gdown.download(gdrive_link, model_path, quiet=False)
 
 # Load the model
-model = load_model_from_drive()
+model = tf.keras.models.load_model(model_path)
 
-# Load tokenizers (replace these paths with the actual paths to your tokenizer files)
-src_tokenizer = load_tokenizer_from_drive("src_tokenizer.pkl")
-tgt_tokenizer = load_tokenizer_from_drive("tgt_tokenizer.pkl")
+# Download tokenizers from Google Drive using gdown
+src_tokenizer_path = "src_tokenizer.pkl"
+tgt_tokenizer_path = "tgt_tokenizer.pkl"
+gdown.download(src_tokenizer_path, src_tokenizer_path, quiet=False)
+gdown.download(tgt_tokenizer_path, tgt_tokenizer_path, quiet=False)
+
+# Load tokenizers
+with open(src_tokenizer_path, 'rb') as f:
+    src_tokenizer = pickle.load(f)
+    
+with open(tgt_tokenizer_path, 'rb') as f:
+    tgt_tokenizer = pickle.load(f)
 
 # Set up Streamlit page
 st.title("Seq2Seq Model Translator")
