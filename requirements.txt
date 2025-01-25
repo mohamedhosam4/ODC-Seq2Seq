@@ -1,4 +1,4 @@
-tensorflow==2.12.0
-streamlit==1.25.0
-numpy==1.24.2
-gdown==4.7.1
+tensorflow
+streamlit
+numpy
+gdown
