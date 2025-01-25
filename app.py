@@ -2,10 +2,10 @@ import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
-import requests
+import gdown
 import pickle
 
-# Function to download the model from Google Drive
+# Function to download the model from Google Drive using gdown
 @st.cache_resource
 def load_model_from_drive():
     # Google Drive model link (replace with actual file ID)
@@ -13,17 +13,16 @@ def load_model_from_drive():
 
     # Download the model
     model_path = "seq2seq_model.h5"
-    with open(model_path, "wb") as f:
-        response = requests.get(gdrive_link)
-        f.write(response.content)
+    gdown.download(gdrive_link, model_path, quiet=False)
     
     # Load and return the model
     return tf.keras.models.load_model(model_path)
 
-# Function to load tokenizer from Google Drive
+# Function to load tokenizer from Google Drive using gdown
 @st.cache_resource
 def load_tokenizer_from_drive(tokenizer_path):
     # Download the tokenizer
+    gdown.download(tokenizer_path, tokenizer_path, quiet=False)
     with open(tokenizer_path, 'rb') as f:
         tokenizer = pickle.load(f)
     return tokenizer
