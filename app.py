@@ -9,7 +9,7 @@ import gdown
 st.title("Seq2Seq Translation Application")
 st.write("Use this application to translate texts using a Seq2Seq model.")
 
-# Define the custom Seq2Seq layer to avoid loading issues
+# Define the custom Seq2Seq layer (if needed for compatibility)
 class Seq2Seq(tf.keras.Model):
     def __init__(self, encoder, decoder):
         super(Seq2Seq, self).__init__()
@@ -39,6 +39,37 @@ def load_tokenizers():
         st.error("Tokenizer files are missing. Please ensure 'src_tokenizer.pkl' and 'tgt_tokenizer.pkl' are available.")
         return None, None
 
+# Helper function to predict translations
+def translate_text(input_text, model, src_tokenizer, tgt_tokenizer):
+    # Convert the source text to a sequence
+    input_seq = pad_sequences(src_tokenizer.texts_to_sequences([input_text]), padding='post')
+
+    # Encode input sequence
+    encoder_model = model.get_layer("encoder")  # Ensure the encoder layer exists in the model
+    state_h, state_c = encoder_model(input_seq)
+
+    # Initialize decoder inputs
+    tgt_seq = np.zeros((1, 1))
+    tgt_seq[0, 0] = tgt_tokenizer.word_index.get("<start>", 0)
+
+    translated_text = []
+    decoder_model = model.get_layer("decoder")  # Ensure the decoder layer exists in the model
+
+    for _ in range(20):  # Set a maximum translation length
+        output, state_h, state_c = decoder_model([tgt_seq, state_h, state_c])
+        predicted_id = tf.argmax(output[0, 0]).numpy()
+
+        # Retrieve the predicted word
+        word = tgt_tokenizer.index_word.get(predicted_id, "")
+        if word == "<end>":
+            break
+        translated_text.append(word)
+
+        # Update decoder input
+        tgt_seq = np.array([[predicted_id]])
+
+    return " ".join(translated_text)
+
 # Load the model and tokenizers
 model = download_and_load_model()
 src_tokenizer, tgt_tokenizer = load_tokenizers()
@@ -52,37 +83,8 @@ else:
     # Translate button
     if st.button("Translate"):
         if input_text:
-            # Convert the source text to a sequence
-            input_seq = pad_sequences(src_tokenizer.texts_to_sequences([input_text]), padding='post')
-
-            # Get encoder states
-            encoder_model = model.encoder
-            decoder_model = model.decoder
-
-            state_h, state_c = encoder_model(input_seq)
-
-            # Start translation with the <start> token
-            tgt_seq = np.zeros((1, 1))
-            tgt_seq[0, 0] = tgt_tokenizer.word_index.get("<start>", 0)
-
-            translated_text = []
-
-            for _ in range(20):  # Set a maximum translation length
-                # Pass the current token to the decoder
-                output, state_h, state_c = decoder_model(tgt_seq, state_h, state_c)
-                predicted_id = tf.argmax(output[0, 0]).numpy()
-
-                # Add the word to the translated text
-                word = tgt_tokenizer.index_word.get(predicted_id, "")
-                if word == "<end>":
-                    break
-                translated_text.append(word)
-
-                # Update the current token
-                tgt_seq = np.array([[predicted_id]])
-
-            # Display the translation
+            translation = translate_text(input_text, model, src_tokenizer, tgt_tokenizer)
             st.write("**Translated Text:**")
-            st.write(" ".join(translated_text))
+            st.write(translation)
         else:
             st.write("Please enter the source text to translate.")
