@@ -1,58 +1,73 @@
-### Streamlit Code
+
+# 2. كود Streamlit لتحميل النموذج واستخدامه
+# سيتم كتابة هذا الكود في Visual Studio Code أو أي بيئة محلية
+
 import streamlit as st
-import torch
-import requests
-from io import BytesIO
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+import gdown
+import os
 
-# Define the model loading and inference functions
-def download_model_from_drive():
-    url = "https://drive.google.com/uc?id=1XE1X39CzG2Ciiz55AxX-_rd7_85_eI7W"
-    response = requests.get(url)
-    response.raise_for_status()
-    return BytesIO(response.content)
+# تحميل النموذج (قم بتنزيله إذا لم يكن موجودًا محليًا)
+MODEL_PATH = "seq2seq_model.h5"
+GDRIVE_MODEL_URL = "https://drive.google.com/uc?id=1-NjnFP41zVpWvxvuY_jEcEsEarMkemnf"
 
-def load_model():
-    encoder = Encoder(INPUT_DIM, EMB_DIM, HIDDEN_DIM, N_LAYERS, DROPOUT)
-    decoder = Decoder(OUTPUT_DIM, EMB_DIM, HIDDEN_DIM, N_LAYERS, DROPOUT)
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = Seq2Seq(encoder, decoder, device).to(device)
+if not os.path.exists(MODEL_PATH):
+    gdown.download(GDRIVE_MODEL_URL, MODEL_PATH, quiet=False)
 
-    model_file = download_model_from_drive()
-    model.load_state_dict(torch.load(model_file, map_location=device))
-    model.eval()
-    return model, device
+@st.cache_resource
+def load_seq2seq_model():
+    return load_model(MODEL_PATH)
 
-def preprocess_input(input_text):
-    try:
-        # Convert input text into integers, splitting by spaces
-        return [int(x) for x in input_text.split()]
-    except ValueError:
-        return None
+model = load_seq2seq_model()
 
-def main():
-    st.title("Seq2Seq Text Transformation")
-    model, device = load_model()
+# إعداد واجهة Streamlit
+st.title("ترجمة باستخدام Seq2Seq")
+st.write("أدخل النص باللغة الإنجليزية للحصول على الترجمة بالعربية.")
+st.write("يمكنك إدخال الكلمات التالية للترجمة: hi, hello, how, good, morning, night, thanks, yes, no")
 
-    input_text = st.text_area("Enter input text (space-separated integers):", "")
-    if st.button("Generate Output"):
-        if input_text:
-            src_data = preprocess_input(input_text)
-            if src_data is not None:
-                src = torch.tensor([src_data], dtype=torch.long).to(device)
-                trg = torch.zeros((10, 1), dtype=torch.long).to(device)  # Placeholder target tensor
+# إدخال النص
+input_text = st.text_input("النص المدخل:")
 
-                with torch.no_grad():
-                    output = model(src, trg, 0)  # No teacher forcing
+# خريطة الأحرف (يجب مطابقتها مع النموذج المدرب)
+input_characters = [' ', 'd', 'e', 'g', 'h', 'i', 'k', 'l', 'm', 'n', 'o', 'r', 's', 't', 'w', 'y']
+target_characters = [' ', 'ا', 'ب', 'ح', 'د', 'ر', 'س', 'ش', 'ع', 'ف', 'ك', 'ل', 'م', 'ن', 'ه', 'و', 'ي']
+num_encoder_tokens = len(input_characters)
+num_decoder_tokens = len(target_characters)
+input_token_index = dict([(char, i) for i, char in enumerate(input_characters)])
+target_token_index = dict([(char, i) for i, char in enumerate(target_characters)])
+reverse_target_char_index = dict((i, char) for char, i in target_token_index.items())
 
-                # Convert output tensor to text
-                output_tokens = output.argmax(2).squeeze(1).tolist()
-                output_text = " ".join(map(str, output_tokens))
+# تحويل النصوص إلى تمثيل رقمي
+max_encoder_seq_length = 10  # حدد الطول الأقصى للتسلسل
 
-                st.success(f"Generated Output: {output_text}")
-            else:
-                st.error("Input must be space-separated integers.")
-        else:
-            st.error("Please enter input text.")
+def encode_input(input_text):
+    encoder_input_data = np.zeros((1, max_encoder_seq_length, num_encoder_tokens), dtype="float32")
+    for t, char in enumerate(input_text):
+        if char in input_token_index:
+            encoder_input_data[0, t, input_token_index[char]] = 1.
+    return encoder_input_data
 
-if __name__ == "__main__":
-    main()
+# توليد الترجمة
+if input_text:
+    encoder_input_data = encode_input(input_text.lower())
+    decoder_input_data = np.zeros((1, 1, num_decoder_tokens))
+    decoder_input_data[0, 0, target_token_index[' ']] = 1.0
+
+    output_text = ""
+    stop_condition = False
+    while not stop_condition:
+        decoder_output = model.predict([encoder_input_data, decoder_input_data])
+        sampled_token_index = np.argmax(decoder_output[0, -1, :])
+        sampled_char = reverse_target_char_index[sampled_token_index]
+        output_text += sampled_char
+
+        if sampled_char == '\n' or len(output_text) > max_encoder_seq_length:
+            stop_condition = True
+
+        next_decoder_input = np.zeros((1, 1, num_decoder_tokens))
+        next_decoder_input[0, 0, sampled_token_index] = 1.0
+        decoder_input_data = next_decoder_input
+
+    st.write("الترجمة:", output_text)
