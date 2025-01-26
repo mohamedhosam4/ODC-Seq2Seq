@@ -4,25 +4,25 @@ import numpy as np
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-# تحميل النموذج المدرب
+# Load the trained model
 model = tf.keras.models.load_model('seq2seq_model.h5')
 
-# تحميل الـ Tokenizer (يجب أن تتأكد من تحميله بشكل صحيح، هنا استخدمنا نموذج تدريبي افتراضي)
+# Load the Tokenizer (make sure it's properly loaded, here we use a simple training example)
 tokenizer = Tokenizer()
 tokenizer.fit_on_texts(['hello', 'hi', 'how are you?', 'hola', '¿cómo estás?'])
 
-# وظيفة التنبؤ باستخدام النموذج
+# Prediction function using the model
 def predict_sequence(input_text):
     input_seq = tokenizer.texts_to_sequences([input_text])
-    input_seq = pad_sequences(input_seq, maxlen=5, padding='post')  # تأكد من تطابق الأطوال
+    input_seq = pad_sequences(input_seq, maxlen=5, padding='post')  # Ensure length consistency
     predicted = model.predict(input_seq)
     predicted_index = np.argmax(predicted[0], axis=1)
     return ' '.join([tokenizer.index_word.get(i) for i in predicted_index if i != 0])
 
-# واجهة المستخدم باستخدام Streamlit
-st.title("تطبيق Seq2Seq للمحادثات")
-input_text = st.text_input("أدخل نصًا:")
+# Streamlit UI
+st.title("Seq2Seq Chat Application")
+input_text = st.text_input("Enter Text:")
 
 if input_text:
     predicted_text = predict_sequence(input_text)
-    st.write(f"النص المترجم: {predicted_text}")
+    st.write(f"Translated Text: {predicted_text}")
