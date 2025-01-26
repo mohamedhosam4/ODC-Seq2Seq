@@ -5,3 +5,4 @@ pillow==11.1.0
 gdown
 nltk
 tensorflow
+torch
