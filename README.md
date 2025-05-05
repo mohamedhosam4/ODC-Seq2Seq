@@ -1,7 +1,8 @@
 
 # ODC-Seq2Seq 🚀
 
-A web-based deep learning project that demonstrates sequence-to-sequence (seq2seq) text generation using an encoder-decoder architecture, developed as part of the ODC AI track.
+A web-based deep learning project that demonstrates sequence-to-sequence (seq2seq) text generation using an encoder-decoder architecture, developed as part of the **AI and Data Science Scholarship** from **Orange Digital Center** in collaboration with **Amit Learning**.
+
 
 👉 **Live App**: [Streamlit App](https://odc-seq2seq.streamlit.app/)  
 📁 **GitHub Repository**: [ODC-Seq2Seq](https://github.com/mohamedhosam4/ODC-Seq2Seq)
