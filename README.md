@@ -26,11 +26,6 @@ The app is deployed via [Streamlit](https://streamlit.io/), offering an interact
 
 ---
 
-## 📸 App Screenshot
-
-![App Screenshot](https://odc-seq2seq.streamlit.app/_static/screenshot.png) <!-- Add a real screenshot if available -->
-
----
 
 ## 🚀 How to Run Locally
 
