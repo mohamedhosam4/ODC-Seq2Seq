@@ -91,4 +91,6 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 🌟 Acknowledgments
 
-This project was developed as part of the **ODC AI Training Track**. Special thanks to the mentors and team for their guidance and support.
+
+"This project was developed as part of the **AI and Data Science Scholarship** from **Orange Digital Center** in collaboration with **Amit Learning**. Special thanks to the mentors and team for their invaluable guidance and support."
+
